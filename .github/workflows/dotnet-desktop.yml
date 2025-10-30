@@ -131,7 +131,7 @@ jobs:
       - name: Download libmpv
         shell: msys2 {0}
         run: |
-          wget -nv -O libmpv.7z https://bgithub.xyz/zhongfly/mpv-winbuild/releases/download/2025-05-03-e663cbc/mpv-dev-x86_64-20250503-git-e663cbc.7z
+          wget -nv -O libmpv.7z https://github.com/zhongfly/mpv-winbuild/releases/download/2025-10-29-98847f5/mpv-dev-x86_64-20251029-git-98847f5.7z
           7z x -y libmpv.7z -olibmpv
           cp -f libmpv/libmpv-2.dll src/MpvNet.Windows/bin/Debug/libmpv-2.dll || echo "libmpv copy skipped"
 
@@ -145,7 +145,7 @@ jobs:
       - name: Download mpvnet.com
         shell: msys2 {0}
         run: |
-          wget -nv -O mpvnet.com https://bgithub.xyz/mpvnet-player/file-host/releases/download/tag/mpvnet.com.txt
+          wget -nv -O mpvnet.com https://github.com/mpvnet-player/file-host/releases/download/tag/mpvnet.com.txt
           cp -f mpvnet.com src/MpvNet.Windows/bin/Debug/mpvnet.com || echo "mpvnet.com copy skipped"
 
       - name: Upload Artifact
