@@ -12,7 +12,6 @@ on:
       - '.gitignore'
       - '.gitattributes'
       - 'docs/**'
-      - '.github/**'
       - 'src/Extensions/**'
   pull_request:
     branches: [main]
@@ -22,7 +21,6 @@ on:
       - '.gitignore'
       - '.gitattributes'
       - 'docs/**'
-      - '.github/**'
       - 'src/Extensions/**'
 
 jobs:
@@ -36,6 +34,11 @@ jobs:
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1.1
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
 
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
@@ -63,21 +66,15 @@ jobs:
       - name: Install Gettext.Tools for localization
         shell: pwsh
         run: |
-          # 下载 nuget.exe
           if (-not (Test-Path "nuget.exe")) {
             Write-Host "Downloading nuget.exe..."
             Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile "nuget.exe"
           }
-
-          # 创建 tools 目录
           if (-not (Test-Path "tools")) {
             New-Item -ItemType Directory -Path "tools" | Out-Null
           }
-
-          # 安装 Gettext.Tools
           Write-Host "Installing Gettext.Tools..."
           .\nuget.exe install Gettext.Tools -OutputDirectory ./tools -ExcludeVersion -NonInteractive
-
           $msgfmtExe = "$PWD\tools\Gettext.Tools\tools\bin\msgfmt.exe"
           if (Test-Path $msgfmtExe) {
             Write-Host "✅ msgfmt.exe installed at: $msgfmtExe"
@@ -91,35 +88,24 @@ jobs:
         run: |
           $poDir = "lang"
           $msgfmtExe = "$PWD\tools\Gettext.Tools\tools\bin\msgfmt.exe"
-
-          # 检查 msgfmt 是否存在
           if (-not (Test-Path $msgfmtExe)) {
             Write-Error "msgfmt.exe not found at $msgfmtExe"
             exit 1
           }
-
-          # 查找所有 .po 文件
           $poFiles = Get-ChildItem $poDir -Filter *.po -ErrorAction SilentlyContinue
           if ($null -eq $poFiles -or $poFiles.Count -eq 0) {
             Write-Warning "No .po files found in $poDir"
             exit 0
           }
-
           foreach ($poFile in $poFiles) {
             $lang = $poFile.BaseName
             $moDir = "$poDir\$lang\LC_MESSAGES"
             $moPath = "$moDir\mpvnet.mo"
-
-            # 创建输出目录
             if (-not (Test-Path $moDir)) {
               New-Item -ItemType Directory -Path $moDir -Force | Out-Null
             }
-
             Write-Host "Compiling '$($poFile.Name)' -> '$moPath'"
-
-            # 调用 msgfmt.exe
             & $msgfmtExe --output-file="$moPath" $poFile.FullName
-
             if ($LASTEXITCODE -ne 0) {
               Write-Error "Failed to compile $($poFile.Name)"
               exit 1
@@ -128,12 +114,12 @@ jobs:
             }
           }
 
-      - name: Download libmpv
+      - name: Download libmpv (official mpv v0.42.0)
         shell: msys2 {0}
         run: |
-          wget -nv -O libmpv.7z https://github.com/zhongfly/mpv-winbuild/releases/download/2025-10-29-98847f5/mpv-dev-x86_64-20251029-git-98847f5.7z
-          7z x -y libmpv.7z -olibmpv
-          cp -f libmpv/libmpv-2.dll src/MpvNet.Windows/bin/Debug/libmpv-2.dll || echo "libmpv copy skipped"
+          wget -nv -O mpv.7z https://github.com/mpv-player/mpv/releases/download/v0.42.0/mpv-v0.42.0-x86_64-w64-mingw32-full.zip
+          7z x -y mpv.7z -ompvbuild
+          find mpvbuild -name '*.dll' -exec cp -f {} src/MpvNet.Windows/bin/Debug/ \;
 
       - name: Download MediaInfo
         shell: msys2 {0}
@@ -148,9 +134,32 @@ jobs:
           wget -nv -O mpvnet.com https://github.com/mpvnet-player/file-host/releases/download/tag/mpvnet.com.txt
           cp -f mpvnet.com src/MpvNet.Windows/bin/Debug/mpvnet.com || echo "mpvnet.com copy skipped"
 
-      - name: Upload Artifact
+      - name: Upload Artifact (framework-dependent)
         uses: actions/upload-artifact@v4
         with:
           name: mpv.net-win64
           path: src/MpvNet.Windows/bin/Debug/
+          if-no-files-found: warn
+
+      - name: Self-contained publish (win-x64)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $proj = "src/MpvNet.Windows/MpvNet.Windows.csproj"
+          dotnet publish $proj -c Debug -r win-x64 --self-contained true -p:PublishSingleFile=true
+          $pub = "src/MpvNet.Windows/bin/Debug/win-x64/publish"
+          if (Test-Path $pub) {
+            Copy-Item "src/MpvNet.Windows/bin/Debug/*.dll" $pub -Force
+            Write-Host "Copied native DLLs into self-contained publish folder."
+          } else {
+            Write-Warning "Publish folder not found: $pub"
+          }
+
+      - name: Upload Artifact (self-contained)
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: mpv.net-win64-selfcontained
+          path: src/MpvNet.Windows/bin/Debug/win-x64/publish/
           if-no-files-found: warn
