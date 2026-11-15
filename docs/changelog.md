@@ -1,16 +1,25 @@
 
-# v7.1.1.5 Beta (????-??-??)
+# v7.1.2.0 (2026-01-09)
+
+- libmpv updated to v0.41 2026-01-09.
+- Some adjustments to recent mpv changes.
+- The Japanese and Turkish translations were updated. Thanks to the translators!
+
+# v7.1.1.5 Beta (2025-11-20)
 
 - Same as in mpv the `?` and `t-4` keys can be used to show the active
   key bindings on-screen, it supports scrolling and searching.
   In the context menu it's located at:  
   `View > More > Show Active Bindings On-Screen`
-- Some bindings have changed:  
+- Bindings of select.lua menus have changed:  
   `F1` On-Screen menu  
   `F2` Bindings  
   `F3` Properties  
   `F4` Commands  
-- The German, Chinese and Japanese translations were updated. Thanks to the translators!
+- The German, Chinese, Japanese and Turkish translations were updated. Thanks to the translators!
+- Users need to install .NET 10 LTS (Long Term Support), it should run on Windows 10.  
+  It was requested by users to prefer LTS over STS (Short Term Support).
+- libmpv and MediaInfo was updated.
 
 # v7.1.1.4 Beta (2025-10-05)
 
