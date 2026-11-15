@@ -134,7 +134,7 @@ jobs:
       - name: Download MediaInfo
         shell: msys2 {0}
         run: |
-          wget -nv -O MediaInfo.7z https://mediaarea.net/download/binary/libmediainfo0/24.03/MediaInfo_DLL_24.03_Windows_x64_WithoutInstaller.7z
+          wget -nv -O MediaInfo.7z https://mediaarea.net/download/binary/libmediainfo0/26.10/MediaInfo_DLL_26.10_Windows_x64_WithoutInstaller.7z
           7z x -y MediaInfo.7z -oMediaInfo
           cp -f MediaInfo/MediaInfo.dll src/MpvNet.Windows/bin/Debug/MediaInfo.dll || echo "MediaInfo copy skipped"
 
