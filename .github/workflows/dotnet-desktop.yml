@@ -114,12 +114,20 @@ jobs:
             }
           }
 
-      - name: Download libmpv (official mpv v0.42.0)
+      - name: Download libmpv (official mpv v0.42.0 libmpv package)
         shell: msys2 {0}
         run: |
-          wget -nv -O mpv.7z https://github.com/mpv-player/mpv/releases/download/v0.42.0/mpv-v0.42.0-x86_64-w64-mingw32-full.zip
-          7z x -y mpv.7z -ompvbuild
-          find mpvbuild -name '*.dll' -exec cp -f {} src/MpvNet.Windows/bin/Debug/ \;
+          wget -nv -O libmpv.7z https://github.com/mpv-player/mpv/releases/download/v0.42.0/libmpv-v0.42.0-x86_64-w64-mingw32-gpl.zip
+          7z x -y libmpv.7z -olibmpv
+          find libmpv -name '*.dll' -exec cp -f {} src/MpvNet.Windows/bin/Debug/ \;
+
+      - name: Verify libmpv-2.dll
+        shell: pwsh
+        run: |
+          $p = "src/MpvNet.Windows/bin/Debug/libmpv-2.dll"
+          if (-not (Test-Path $p)) { Write-Error "libmpv-2.dll is missing from the build output!"; exit 1 }
+          $v = (Get-Item $p).VersionInfo.FileVersion
+          Write-Host "libmpv-2.dll FileVersion = $v"
 
       - name: Download MediaInfo
         shell: msys2 {0}
